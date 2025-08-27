@@ -3,6 +3,7 @@ package co.com.bancolombia.usecase.requestapplication;
 import co.com.bancolombia.model.common.LoggerPort;
 import co.com.bancolombia.model.requestapplication.RequestApplication;
 import co.com.bancolombia.model.requestapplication.gateways.RequestApplicationRepository;
+import co.com.bancolombia.model.status.StatusCode;
 import co.com.bancolombia.model.status.gateways.StatusRepository;
 import co.com.bancolombia.model.typeloan.gateways.TypeLoanRepository;
 import co.com.bancolombia.model.user.gateways.UserRepository;
@@ -27,15 +28,17 @@ public class RequestApplicationUseCase implements RequestApplicationEvents {
 
         return userRepository.findByDocumentNumber(requestApplication.getDocumentNumber())
                 .switchIfEmpty(Mono.error(new DomainValidationException("User not found in ms-auth")))
-                .map(user -> requestApplication.toBuilder().email(user.getEmail()).build())
+                .map(user -> requestApplication.toBuilder()
+                        .email(user.getEmail())
+                        .statusId(StatusCode.PENDING.id()) // establecer siempre PENDIENTE
+                        .build())
                 .flatMap(ra -> Mono.zip(
-                                        statusRepository.findById(ra.getStatusId())
+                                        statusRepository.findById(StatusCode.PENDING.id()) // validar que exista en BD
                                                 .switchIfEmpty(Mono.error(new DomainValidationException("Status not found"))),
                                         typeLoanRepository.findById(ra.getLoanTypeId())
                                                 .switchIfEmpty(Mono.error(new DomainValidationException("TypeLoan not found")))
                                 )
                                 .map(tuple -> {
-                                    // tuple.getT1() es Status (no lo usamos aquí), tuple.getT2() es TypeLoan
                                     var typeLoan = tuple.getT2();
                                     validateAmountInRange(ra.getAmount(), typeLoan.getMinAmount(), typeLoan.getMaxAmount());
                                     return ra;
@@ -50,16 +53,15 @@ public class RequestApplicationUseCase implements RequestApplicationEvents {
 
 
 
-private void validateAmountInRange(BigDecimal amount, BigDecimal min, BigDecimal max) {
-    if (amount == null) throw new IllegalArgumentException("Amount is required");
-    if (min != null && amount.compareTo(min) < 0)
-        throw new IllegalArgumentException("Amount below minimum: " + amount + " < " + min);
-    if (max != null && amount.compareTo(max) > 0)
-        throw new IllegalArgumentException("Amount above maximum: " + amount + " > " + max);
-}
+    private void validateAmountInRange(BigDecimal amount, BigDecimal min, BigDecimal max) {
+        if (amount == null) throw new IllegalArgumentException("Amount is required");
+        if (min != null && amount.compareTo(min) < 0)
+            throw new IllegalArgumentException("Amount below minimum: " + amount + " < " + min);
+        if (max != null && amount.compareTo(max) > 0)
+            throw new IllegalArgumentException("Amount above maximum: " + amount + " > " + max);
+    }
 
 
 
 
 }
-
