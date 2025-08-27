@@ -1,14 +1,63 @@
-##Spring Configuration
 server:
-  port: 8080
+  port: 9090
 spring:
   application:
-    name: MsRequest
+    name: "MsRequest"
   devtools:
     add-properties: false
   h2:
     console:
       enabled: true
-      path: /h2
+      path: "/h2"
   profiles:
-    include:
+    include: null
+adapters:
+  r2dbc:
+    host: "localhost"
+    port: 5432
+    database: "db-request"
+    schema: "public"
+    username: "gestor"
+    password: "123456"
+  restconsumer:
+    timeout: 5000
+    url: http://localhost:8080
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+resilience4j:
+  circuitbreaker:
+    instances:
+      testGet:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+      testPost:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+routes:
+  paths:
+    request: "/api/v1/request"
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:8080"
