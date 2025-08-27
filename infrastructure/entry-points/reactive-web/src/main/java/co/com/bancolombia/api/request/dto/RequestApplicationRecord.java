@@ -18,9 +18,7 @@ public record RequestApplicationRecord(
         @Email(message = "Email should be valid")
         String email,
         @NotNull(message = "Loan type ID is mandatory")
-        Long loanTypeId,
-        @NotNull(message = "status type ID is mandatory")
-        Long statusId
+        Long loanTypeId
 ) {
 }
 

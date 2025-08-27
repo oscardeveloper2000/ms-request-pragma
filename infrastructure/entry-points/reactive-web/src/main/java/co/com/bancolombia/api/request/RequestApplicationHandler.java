@@ -33,15 +33,15 @@ public class RequestApplicationHandler {
         logger.info("listenPOSTUseCase: inicio procesamiento de solicitud");
         return serverRequest
                 .bodyToMono(RequestApplicationRecord.class)
-                .doOnNext(dto -> logger.debug("listenPOSTUseCase: payload recibido documentNumber={}, loanTypeId={}, statusId={}",
-                        dto.documentNumber(), dto.loanTypeId(), dto.statusId()))
-                .map(mapper::toModel)
+                .doOnNext(dto -> logger.debug("listenPOSTUseCase: payload recibido documentNumber={}, loanTypeId={}",
+                        dto.documentNumber(), dto.loanTypeId()))
+                .map(mapper::fromRequest)
                 .doOnNext(model -> logger.info("listenPOSTUseCase: mapeado a modelo documentNumber={}, loanTypeId={}",
                         model.getDocumentNumber(), model.getLoanTypeId()))
                 .flatMap(useCase::applySave)
                 .doOnSuccess(saved -> logger.info("listenPOSTUseCase: guardado OK id={}, documentNumber={}",
                         saved.getId(), saved.getDocumentNumber()))
-                .map(mapper::toDTO)
+                .map(mapper::toResponse)
                 .flatMap(dto -> ServerResponse
                         .status(HttpStatus.CREATED)
                         .contentType(MediaType.APPLICATION_JSON)
