@@ -176,4 +176,49 @@ class RequestApplicationUseCaseTest {
                         && ex.getMessage().equals("Amount is required"))
                 .verify();
     }
+
+    // ✅ Caso: min es null (no debe lanzar excepción, siempre pasa)
+@Test
+void shouldPass_WhenMinIsNull() {
+    var request = buildRequest().toBuilder().amount(BigDecimal.valueOf(5000)).build();
+    var user = User.builder().id(99L).email("user@test.com").build();
+    var status = Status.builder().id(StatusCode.PENDING.id()).description("PENDING").build();
+    var typeLoan = TypeLoan.builder()
+            .id(10L)
+            .minAmount(null) // 🔥 probamos min = null
+            .maxAmount(BigDecimal.valueOf(10000))
+            .build();
+
+    when(userRepository.findByDocumentNumber("12345")).thenReturn(Mono.just(user));
+    when(statusRepository.findById(StatusCode.PENDING.id())).thenReturn(Mono.just(status));
+    when(typeLoanRepository.findById(10L)).thenReturn(Mono.just(typeLoan));
+    when(repository.save(any(RequestApplication.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+    StepVerifier.create(useCase.applySave(request))
+            .expectNextMatches(saved -> saved.getAmount().equals(BigDecimal.valueOf(5000)))
+            .verifyComplete();
+}
+
+// ✅ Caso: max es null (no debe lanzar excepción, siempre pasa)
+@Test
+void shouldPass_WhenMaxIsNull() {
+    var request = buildRequest().toBuilder().amount(BigDecimal.valueOf(5000)).build();
+    var user = User.builder().id(99L).email("user@test.com").build();
+    var status = Status.builder().id(StatusCode.PENDING.id()).description("PENDING").build();
+    var typeLoan = TypeLoan.builder()
+            .id(10L)
+            .minAmount(BigDecimal.valueOf(1000))
+            .maxAmount(null) // 🔥 probamos max = null
+            .build();
+
+    when(userRepository.findByDocumentNumber("12345")).thenReturn(Mono.just(user));
+    when(statusRepository.findById(StatusCode.PENDING.id())).thenReturn(Mono.just(status));
+    when(typeLoanRepository.findById(10L)).thenReturn(Mono.just(typeLoan));
+    when(repository.save(any(RequestApplication.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+    StepVerifier.create(useCase.applySave(request))
+            .expectNextMatches(saved -> saved.getAmount().equals(BigDecimal.valueOf(5000)))
+            .verifyComplete();
+}
+
 }
