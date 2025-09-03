@@ -7,7 +7,7 @@ import co.com.bancolombia.model.status.StatusCode;
 import co.com.bancolombia.model.status.gateways.StatusRepository;
 import co.com.bancolombia.model.typeloan.gateways.TypeLoanRepository;
 import co.com.bancolombia.model.user.gateways.UserRepository;
-import co.com.bancolombia.usecase.requestapplication.commom.DomainValidationException;
+import co.com.bancolombia.usecase.commom.DomainValidationException;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 

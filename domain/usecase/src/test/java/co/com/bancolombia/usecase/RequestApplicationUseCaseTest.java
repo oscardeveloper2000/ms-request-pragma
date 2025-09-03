@@ -1,4 +1,4 @@
-package co.com.bancolombia.usecase.requestapplication;
+package co.com.bancolombia.usecase;
 
 import co.com.bancolombia.model.common.LoggerPort;
 import co.com.bancolombia.model.requestapplication.RequestApplication;
@@ -10,10 +10,10 @@ import co.com.bancolombia.model.typeloan.TypeLoan;
 import co.com.bancolombia.model.typeloan.gateways.TypeLoanRepository;
 import co.com.bancolombia.model.user.User;
 import co.com.bancolombia.model.user.gateways.UserRepository;
-import co.com.bancolombia.usecase.requestapplication.commom.DomainValidationException;
+import co.com.bancolombia.usecase.commom.DomainValidationException;
+import co.com.bancolombia.usecase.requestapplication.RequestApplicationUseCase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -21,7 +21,6 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class RequestApplicationUseCaseTest {

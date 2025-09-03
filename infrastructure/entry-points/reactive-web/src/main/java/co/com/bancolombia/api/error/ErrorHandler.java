@@ -1,7 +1,7 @@
 package co.com.bancolombia.api.error;
 
 import co.com.bancolombia.model.common.LoggerPort;
-import co.com.bancolombia.usecase.requestapplication.commom.DomainValidationException;
+import co.com.bancolombia.usecase.commom.DomainValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
