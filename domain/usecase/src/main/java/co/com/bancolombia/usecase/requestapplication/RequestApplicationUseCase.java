@@ -1,5 +1,6 @@
 package co.com.bancolombia.usecase.requestapplication;
 
+import co.com.bancolombia.model.auth.TokenGateway;
 import co.com.bancolombia.model.common.LoggerPort;
 import co.com.bancolombia.model.requestapplication.RequestApplication;
 import co.com.bancolombia.model.requestapplication.gateways.RequestApplicationRepository;
@@ -20,31 +21,39 @@ public class RequestApplicationUseCase implements RequestApplicationEvents {
     private final TypeLoanRepository typeLoanRepository;
     private final UserRepository userRepository;
     private final LoggerPort logger;
+    private final TokenGateway tokenGateway;
 
     @Override
     public Mono<RequestApplication> applySave(RequestApplication requestApplication) {
         logger.info("applySave: inicio documentNumber={}, loanTypeId={}",
                 requestApplication.getDocumentNumber(), requestApplication.getLoanTypeId());
+        return tokenGateway.getToken()
+                .zipWith(tokenGateway.getEmailFromToken())
+                .flatMap(tuple1 -> {
+                    String token = tuple1.getT1();
+                    String emailFromToken = tuple1.getT2();
+                    return userRepository.findByDocumentNumber(requestApplication.getDocumentNumber(), token)
+                            .switchIfEmpty(Mono.error(new DomainValidationException("User not found in ms-auth")))
+                            .flatMap(user -> validatePersonIdentity(emailFromToken, user.getEmail()).then(Mono.just(user)))
+                            .map(user -> requestApplication.toBuilder()
+                                    .email(user.getEmail())
+                                    .statusId(StatusCode.PENDING.id()) // establecer siempre PENDIENTE
+                                    .build())
+                            .flatMap(ra -> Mono.zip(
+                                                    statusRepository.findById(StatusCode.PENDING.id()) // validar que exista en BD
+                                                            .switchIfEmpty(Mono.error(new DomainValidationException("Status not found"))),
+                                                    typeLoanRepository.findById(ra.getLoanTypeId())
+                                                            .switchIfEmpty(Mono.error(new DomainValidationException("TypeLoan not found")))
+                                            )
+                                            .map(tuple2 -> {
+                                                var typeLoan = tuple2.getT2();
+                                                validateAmountInRange(ra.getAmount(), typeLoan.getMinAmount(), typeLoan.getMaxAmount());
+                                                return ra;
+                                            })
+                            )
+                            .flatMap(repository::save);
+                } )
 
-        return userRepository.findByDocumentNumber(requestApplication.getDocumentNumber())
-                .switchIfEmpty(Mono.error(new DomainValidationException("User not found in ms-auth")))
-                .map(user -> requestApplication.toBuilder()
-                        .email(user.getEmail())
-                        .statusId(StatusCode.PENDING.id()) // establecer siempre PENDIENTE
-                        .build())
-                .flatMap(ra -> Mono.zip(
-                                        statusRepository.findById(StatusCode.PENDING.id()) // validar que exista en BD
-                                                .switchIfEmpty(Mono.error(new DomainValidationException("Status not found"))),
-                                        typeLoanRepository.findById(ra.getLoanTypeId())
-                                                .switchIfEmpty(Mono.error(new DomainValidationException("TypeLoan not found")))
-                                )
-                                .map(tuple -> {
-                                    var typeLoan = tuple.getT2();
-                                    validateAmountInRange(ra.getAmount(), typeLoan.getMinAmount(), typeLoan.getMaxAmount());
-                                    return ra;
-                                })
-                )
-                .flatMap(repository::save)
                 .doOnSuccess(saved -> logger.info("applySave: guardado OK id={}, documentNumber={}",
                         saved.getId(), saved.getDocumentNumber()))
                 .doOnError(e -> logger.error("applySave: error", e));
@@ -62,6 +71,12 @@ public class RequestApplicationUseCase implements RequestApplicationEvents {
     }
 
 
+    private Mono<Void> validatePersonIdentity(String emailFromToken, String emailFromUser) {
+        if (!emailFromToken.equals(emailFromUser)) {
+            return Mono.error(new DomainValidationException("The user does not have permissions to make this request for email: " + emailFromUser));
+        }
 
+        return Mono.empty();
+    }
 
 }
