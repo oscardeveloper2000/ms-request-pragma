@@ -11,6 +11,11 @@ spring:
       path: "/h2"
   profiles:
     include: null
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret: "c3VwZXJzZWNyZXRrZXlzZWNyZXRrZXlzZWNyZXQxMjM0"
 adapters:
   r2dbc:
     host: "localhost"
