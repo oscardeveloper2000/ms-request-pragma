@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -37,8 +38,10 @@ public class SecurityConfig {
   public SecurityWebFilterChain filterChain(ServerHttpSecurity http,
       ReactiveJwtAuthenticationConverterAdapter jwtAuthConverter) {
     return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-        .authorizeExchange(exchange -> exchange.pathMatchers("/api/v1/request")
+        .authorizeExchange(exchange -> exchange.pathMatchers(HttpMethod.POST, "/api/v1/request")
             .hasAuthority(RoleCode.CLIENT.dbName())
+                .pathMatchers(HttpMethod.GET, "/api/v1/request")
+                .hasAuthority(RoleCode.ADVISOR.dbName())
             .anyExchange()
             .authenticated())
         .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(

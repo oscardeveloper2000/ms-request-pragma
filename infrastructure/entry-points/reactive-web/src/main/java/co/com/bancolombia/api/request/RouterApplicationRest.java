@@ -18,6 +18,7 @@ public class RouterApplicationRest {
     private final RequestApplicationHandler handler;
     @Bean
     public RouterFunction<ServerResponse> routerFunction(RequestApplicationHandler handler) {
-        return route(POST(path.getRequest()), handler::listenPOSTUseCase);
+        return route(POST(path.getRequest()), handler::listenPOSTUseCase)
+                .andRoute(GET(path.getRequest()), handler::listenFilterByStatusId);
     }
 }
