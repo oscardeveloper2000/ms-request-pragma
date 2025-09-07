@@ -42,6 +42,8 @@ public class SecurityConfig {
             .hasAuthority(RoleCode.CLIENT.dbName())
                 .pathMatchers(HttpMethod.GET, "/api/v1/request")
                 .hasAuthority(RoleCode.ADVISOR.dbName())
+                .pathMatchers(HttpMethod.PUT, "/api/v1/request/**")
+                .hasAuthority(RoleCode.ADVISOR.dbName())
             .anyExchange()
             .authenticated())
         .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(
