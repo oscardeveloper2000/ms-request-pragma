@@ -3,11 +3,13 @@ package co.com.bancolombia.api.request;
 import co.com.bancolombia.api.error.ErrorHandler;
 import co.com.bancolombia.api.request.dto.RequestApplicationMapper;
 import co.com.bancolombia.api.request.dto.RequestApplicationRecord;
+import co.com.bancolombia.api.request.dto.UpdateStatusRequest;
 import co.com.bancolombia.model.common.CustomPageResponseReport;
 import co.com.bancolombia.model.common.LoggerPort;
 import co.com.bancolombia.model.common.PageResponse;
 import co.com.bancolombia.model.requestapplication.RequestReportResponse;
 import co.com.bancolombia.usecase.requestapplication.RequestApplicationEvents;
+import co.com.bancolombia.usecase.requestapplication.UpdateSatus;
 import lombok.RequiredArgsConstructor;
 import co.com.bancolombia.model.requestapplication.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -29,8 +31,7 @@ public class RequestApplicationHandler {
     private final RequestApplicationMapper mapper;
     private final LoggerPort logger;
     private final ErrorHandler errorHandler;
-
-
+    private final UpdateSatus updateSatusUseCase;
 
     public Mono<ServerResponse> listenPOSTUseCase(ServerRequest serverRequest) {
         logger.info("listenPOSTUseCase: inicio procesamiento de solicitud");
@@ -76,6 +77,28 @@ public class RequestApplicationHandler {
                 .body(result, RequestReportResponse.class)
                 .doOnTerminate(() -> logger.info("SolicitudHandler: fin GET /api/v1/solicitud"));
     }
+
+// Agregar este método en RequestApplicationHandler.java
+public Mono<ServerResponse> listenPUTUpdateStatus(ServerRequest serverRequest) {
+    logger.info("listenPUTUpdateStatus: inicio procesamiento de actualización de estado");
+
+    return Mono.fromCallable(() -> Long.parseLong(serverRequest.pathVariable("requestId")))
+            .flatMap(requestId -> serverRequest.bodyToMono(UpdateStatusRequest.class)
+                .doOnNext(dto -> logger.debug("listenPUTUpdateStatus: payload recibido requestId={}, newStatus={}",
+                    requestId, dto.newStatus()))
+                .flatMap(dto -> updateSatusUseCase.updateStatus(requestId, dto.newStatus()))
+                .doOnSuccess(response -> logger.info("listenPUTUpdateStatus: actualización OK requestId={}, statusName={}",
+                    response.getRequestId(), response.getStatusName()))
+                .flatMap(response -> ServerResponse
+                    .ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(response))
+                .onErrorResume(error -> errorHandler.handle(error, serverRequest)))
+            .onErrorResume(e -> {
+                logger.error("listenPUTUpdateStatus: error parsing requestId", e);
+                return ServerResponse.badRequest().bodyValue("Invalid requestId format");
+            });
+}
 
 
 

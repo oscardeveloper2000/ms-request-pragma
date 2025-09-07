@@ -7,8 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
@@ -19,6 +18,7 @@ public class RouterApplicationRest {
     @Bean
     public RouterFunction<ServerResponse> routerFunction(RequestApplicationHandler handler) {
         return route(POST(path.getRequest()), handler::listenPOSTUseCase)
-                .andRoute(GET(path.getRequest()), handler::listenFilterByStatusId);
+                .andRoute(GET(path.getRequest()), handler::listenFilterByStatusId)
+                .andRoute(PUT(path.getRequest() + "/{requestId}/status"), handler::listenPUTUpdateStatus);
     }
 }
