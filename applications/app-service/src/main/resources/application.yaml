@@ -26,8 +26,7 @@ adapters:
     password: "123456"
   restconsumer:
     timeout: 5000
-    url: http://localhost:8080
-
+    url: "http://localhost:8080"
 management:
   health:
     circuitbreakers:
@@ -66,3 +65,8 @@ routes:
     request: "/api/v1/request"
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
+adapter:
+  sqs:
+    region: "us-east-1"
+    queueUrl: "https://sqs.us-east-1.amazonaws.com/794490944018/loan-notification-email-queue"
+
