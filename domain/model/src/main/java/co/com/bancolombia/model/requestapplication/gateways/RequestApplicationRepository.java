@@ -12,5 +12,6 @@ public interface RequestApplicationRepository {
     Flux<RequestApplication> findAllByStatusIdWithPageable (Long statusId, PageRequest pageable);
     Flux<RequestApplication> findAllByStatusId (Long statusId);
     Mono<Long> countByStatusId (Long statusId);
+    Mono<RequestApplication> findById(Long id);
 
 }

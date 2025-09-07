@@ -4,6 +4,7 @@ import co.com.bancolombia.model.auth.TokenGateway;
 import co.com.bancolombia.model.common.LoggerPort;
 import co.com.bancolombia.model.common.PageResponse;
 import co.com.bancolombia.model.common.CustomPageResponseReport;
+import co.com.bancolombia.model.notification.NotificationGateway;
 import co.com.bancolombia.model.requestapplication.PageRequest;
 import co.com.bancolombia.model.requestapplication.RequestApplication;
 import co.com.bancolombia.model.requestapplication.RequestReportResponse;
