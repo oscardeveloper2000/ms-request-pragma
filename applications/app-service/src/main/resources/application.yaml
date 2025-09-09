@@ -1,5 +1,5 @@
 server:
-  port: 9090
+  port: ${SERVER_PORT:8081}
 spring:
   application:
     name: "MsRequest"
@@ -15,18 +15,18 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          secret: "c3VwZXJzZWNyZXRrZXlzZWNyZXRrZXlzZWNyZXQxMjM0"
+          secret: "${JWT_KEY_SECRET:c3VwZXJzZWNyZXRrZXlzZWNyZXRrZXlzZWNyZXQxMjM0}"
 adapters:
   r2dbc:
-    host: "localhost"
-    port: 5432
-    database: "db-request"
-    schema: "public"
-    username: "gestor"
-    password: "123456"
+    host: ${DATABASE_HOST:localhost}
+    port: ${DATABASE_PORT:5432}
+    database: ${DATABASE_NAME:db-request}
+    schema: ${DATABASE_SCHEMA:public}
+    username: ${DATABASE_USER:gestor}
+    password: ${DATABASE_PASSWORD:123456}
   restconsumer:
     timeout: 5000
-    url: "http://localhost:8080"
+    url: ${BASE_URL_MS_AUTH:"http://localhost:8080"}
 management:
   health:
     circuitbreakers:
@@ -64,9 +64,9 @@ routes:
   paths:
     request: "/api/v1/request"
 cors:
-  allowed-origins: "http://localhost:4200,http://localhost:8080"
+  allowed-origins: "*"
 adapter:
   sqs:
-    region: "us-east-1"
-    queueUrl: "https://sqs.us-east-1.amazonaws.com/794490944018/loan-notification-email-queue"
+    region: ${SQS_REGION:"us-east-1"}
+    queueUrl: ${SQS_URL:"https://sqs.us-east-1.amazonaws.com/794490944018/loan-notification-email-queue"}
 
