@@ -1,16 +1,15 @@
 package co.com.bancolombia.usecase.requestapplication;
 
-import co.com.bancolombia.model.auth.TokenGateway;
-import co.com.bancolombia.model.common.LoggerPort;
+import co.com.bancolombia.model.common.gateways.LoggerPort;
 import co.com.bancolombia.model.common.dto.UpdateStatusResponse;
-import co.com.bancolombia.model.notification.NotificationGateway;
-import co.com.bancolombia.model.requestapplication.RequestApplication;
-import co.com.bancolombia.model.requestapplication.gateways.RequestApplicationRepository;
-import co.com.bancolombia.model.status.StatusCode;
-import co.com.bancolombia.model.status.gateways.StatusRepository;
-import co.com.bancolombia.model.typeloan.gateways.TypeLoanRepository;
-import co.com.bancolombia.model.user.User;
-import co.com.bancolombia.model.user.gateways.UserRepository;
+import co.com.bancolombia.model.external.messaging.gateway.MessagePublisherGateway;
+import co.com.bancolombia.model.domains.requestapplication.RequestApplication;
+import co.com.bancolombia.model.domains.requestapplication.gateways.RequestApplicationRepository;
+import co.com.bancolombia.model.domains.status.StatusCode;
+import co.com.bancolombia.model.domains.status.gateways.StatusRepository;
+import co.com.bancolombia.model.domains.typeloan.gateways.TypeLoanRepository;
+import co.com.bancolombia.model.external.rest.user.dto.User;
+import co.com.bancolombia.model.external.rest.user.gateways.UserRepository;
 import co.com.bancolombia.usecase.commom.DomainValidationException;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -22,8 +21,7 @@ public class UpdateStatusUseCase implements UpdateSatus{
     private final TypeLoanRepository typeLoanRepository;
     private final UserRepository userRepository;
     private final LoggerPort logger;
-    private final NotificationGateway notificationGateway;
-    private final TokenGateway tokenGateway;
+    private final MessagePublisherGateway messagePublisherGateway;
 
     @Override
     public Mono<UpdateStatusResponse> updateStatus(Long requestId, String newStatus) {
@@ -79,9 +77,9 @@ public class UpdateStatusUseCase implements UpdateSatus{
     }
 
     private Mono<String> getUserDataAndSendNotification(RequestApplication request, String status) {
-        return tokenGateway.getToken()
-            .doOnSuccess(token -> logger.info("updateStatus: token obtained for user lookup"))
-            .flatMap(token -> userRepository.findByDocumentNumber(request.getDocumentNumber(), token))
+        logger.info("updateStatus: Solicitud con nueva actualizacion para requestId={}, documentNumber={}, statusId={}", request.getId(), request.getDocumentNumber(), request.getStatusId());
+
+        return  userRepository.findByDocumentNumber(request.getDocumentNumber())
             .switchIfEmpty(Mono.error(new DomainValidationException("User not found with document: " + request.getDocumentNumber())))
             .doOnSuccess(user -> logger.info("updateStatus: user found documentNumber={}, userName={}",
                 user.getDocumentNumber(), user.getFirstName() + " " + user.getLastName()))
@@ -91,7 +89,7 @@ public class UpdateStatusUseCase implements UpdateSatus{
 
     private Mono<String> sendNotification(RequestApplication request, String status, User user) {
         String message = buildNotificationMessage(request, status, user);
-        return notificationGateway.sendNotification(message);
+        return messagePublisherGateway.publishLoanNotificationEmail(message);
     }
 
     private String buildNotificationMessage(RequestApplication request, String status, User user) {

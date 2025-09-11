@@ -1,6 +1,7 @@
 package co.com.bancolombia.config;
 
-import co.com.bancolombia.model.common.LoggerPort;
+
+import co.com.bancolombia.model.common.gateways.LoggerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

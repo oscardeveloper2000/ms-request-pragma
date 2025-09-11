@@ -1,16 +1,16 @@
 package co.com.bancolombia.usecase.requestapplication;
 
 import co.com.bancolombia.model.auth.TokenGateway;
-import co.com.bancolombia.model.common.LoggerPort;
-import co.com.bancolombia.model.common.dto.UpdateStatusResponse;
+import co.com.bancolombia.model.common.gateways.LoggerPort;
+import co.com.bancolombia.model.external.messaging.gateway.MessagePublisherGateway;
 import co.com.bancolombia.model.notification.NotificationGateway;
-import co.com.bancolombia.model.requestapplication.RequestApplication;
-import co.com.bancolombia.model.requestapplication.gateways.RequestApplicationRepository;
-import co.com.bancolombia.model.status.StatusCode;
-import co.com.bancolombia.model.status.gateways.StatusRepository;
-import co.com.bancolombia.model.typeloan.gateways.TypeLoanRepository;
-import co.com.bancolombia.model.user.User;
-import co.com.bancolombia.model.user.gateways.UserRepository;
+import co.com.bancolombia.model.domains.requestapplication.RequestApplication;
+import co.com.bancolombia.model.domains.requestapplication.gateways.RequestApplicationRepository;
+import co.com.bancolombia.model.domains.status.StatusCode;
+import co.com.bancolombia.model.domains.status.gateways.StatusRepository;
+import co.com.bancolombia.model.domains.typeloan.gateways.TypeLoanRepository;
+import co.com.bancolombia.model.external.rest.user.dto.User;
+import co.com.bancolombia.model.external.rest.user.gateways.UserRepository;
 import co.com.bancolombia.usecase.commom.DomainValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class UpdateStatusUseCaseTest {
     private LoggerPort logger;
 
     @Mock
-    private NotificationGateway notificationGateway;
+    private MessagePublisherGateway messagePublisherGateway;
 
     @Mock
     private TokenGateway tokenGateway;
@@ -59,7 +59,7 @@ class UpdateStatusUseCaseTest {
             typeLoanRepository,
             userRepository,
             logger,
-            notificationGateway,
+                messagePublisherGateway,
             tokenGateway
         );
     }
@@ -77,7 +77,7 @@ class UpdateStatusUseCaseTest {
         when(requestLoanRepository.save(any())).thenReturn(Mono.just(updatedRequest));
         when(tokenGateway.getToken()).thenReturn(Mono.just(token));
         when(userRepository.findByDocumentNumber(request.getDocumentNumber(), token)).thenReturn(Mono.just(user));
-        when(notificationGateway.sendNotification(anyString())).thenReturn(Mono.just("message-id-123"));
+        when(messagePublisherGateway.publishLoanNotificationEmail(anyString())).thenReturn(Mono.just("message-id-123"));
 
         StepVerifier.create(useCase.updateStatus(requestId, newStatus))
                 .expectNextMatches(response ->
@@ -86,7 +86,7 @@ class UpdateStatusUseCaseTest {
                 .verifyComplete();
 
         verify(requestLoanRepository).save(argThat(req -> req.getStatusId().equals(StatusCode.APPROVED.id())));
-        verify(notificationGateway).sendNotification(contains("APPROVED"));
+        verify(messagePublisherGateway).publishLoanNotificationEmail(contains("APPROVED"));
     }
 
     @Test
@@ -102,7 +102,7 @@ class UpdateStatusUseCaseTest {
         when(requestLoanRepository.save(any())).thenReturn(Mono.just(updatedRequest));
         when(tokenGateway.getToken()).thenReturn(Mono.just(token));
         when(userRepository.findByDocumentNumber(request.getDocumentNumber(), token)).thenReturn(Mono.just(user));
-        when(notificationGateway.sendNotification(anyString())).thenReturn(Mono.just("message-id-123"));
+        when(messagePublisherGateway.publishLoanNotificationEmail(anyString())).thenReturn(Mono.just("message-id-123"));
 
         StepVerifier.create(useCase.updateStatus(requestId, newStatus))
                 .expectNextMatches(response ->
@@ -111,7 +111,7 @@ class UpdateStatusUseCaseTest {
                 .verifyComplete();
 
         verify(requestLoanRepository).save(argThat(req -> req.getStatusId().equals(StatusCode.REJECTED.id())));
-        verify(notificationGateway).sendNotification(contains("REJECTED"));
+        verify(messagePublisherGateway).publishLoanNotificationEmail(contains("REJECTED"));
     }
 
 //    @Test
@@ -208,7 +208,7 @@ void shouldThrowException_WhenUserNotFound() {
         when(requestLoanRepository.save(any())).thenReturn(Mono.just(updatedRequest), Mono.just(request));
         when(tokenGateway.getToken()).thenReturn(Mono.just(token));
         when(userRepository.findByDocumentNumber(request.getDocumentNumber(), token)).thenReturn(Mono.just(user));
-        when(notificationGateway.sendNotification(anyString())).thenReturn(Mono.error(new RuntimeException("SQS error")));
+        when(messagePublisherGateway.publishLoanNotificationEmail(anyString())).thenReturn(Mono.error(new RuntimeException("SQS error")));
 
         StepVerifier.create(useCase.updateStatus(requestId, newStatus))
                 .expectErrorMatches(ex -> ex instanceof DomainValidationException &&
@@ -231,13 +231,13 @@ void shouldThrowException_WhenUserNotFound() {
         when(requestLoanRepository.save(any())).thenReturn(Mono.just(updatedRequest));
         when(tokenGateway.getToken()).thenReturn(Mono.just(token));
         when(userRepository.findByDocumentNumber(request.getDocumentNumber(), token)).thenReturn(Mono.just(user));
-        when(notificationGateway.sendNotification(anyString())).thenReturn(Mono.just("message-id-123"));
+        when(messagePublisherGateway.publishLoanNotificationEmail(anyString())).thenReturn(Mono.just("message-id-123"));
 
         StepVerifier.create(useCase.updateStatus(requestId, newStatus))
                 .expectNextCount(1)
                 .verifyComplete();
 
-        verify(notificationGateway).sendNotification(argThat(message ->
+        verify(messagePublisherGateway).publishLoanNotificationEmail(argThat(message ->
             message.contains("\"requestId\": 1") &&
             message.contains("\"status\": \"APPROVED\"") &&
             message.contains("\"userClient\": \"Juan Pérez\"") &&
@@ -258,7 +258,7 @@ void shouldThrowException_WhenUserNotFound() {
         when(requestLoanRepository.save(any())).thenReturn(Mono.just(updatedRequest));
         when(tokenGateway.getToken()).thenReturn(Mono.just(token));
         when(userRepository.findByDocumentNumber(request.getDocumentNumber(), token)).thenReturn(Mono.just(user));
-        when(notificationGateway.sendNotification(anyString())).thenReturn(Mono.just("message-id-123"));
+        when(messagePublisherGateway.publishLoanNotificationEmail(anyString())).thenReturn(Mono.just("message-id-123"));
 
         StepVerifier.create(useCase.updateStatus(requestId, newStatus))
                 .expectNextMatches(response -> response.getStatusName().equals("approved"))

@@ -1,7 +1,9 @@
 package co.com.bancolombia.sqs.sender;
 
-import co.com.bancolombia.model.notification.NotificationGateway;
+
+import co.com.bancolombia.model.external.messaging.gateway.MessagePublisherGateway;
 import co.com.bancolombia.sqs.sender.config.SQSSenderProperties;
+import co.com.bancolombia.sqs.sender.enums.QueueType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -13,22 +15,47 @@ import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 @Service
 @Log4j2
 @RequiredArgsConstructor
-public class SQSSender implements NotificationGateway /*implements SomeGateway*/ {
+public class SQSSender implements MessagePublisherGateway /*implements SomeGateway*/ {
     private final SQSSenderProperties properties;
     private final SqsAsyncClient client;
 
-    public Mono<String> sendNotification(String message) {
-        return Mono.fromCallable(() -> buildRequest(message))
-                .flatMap(request -> Mono.fromFuture(client.sendMessage(request)))
-                .doOnNext(response -> log.debug("Message sent {}", response.messageId()))
-                .map(SendMessageResponse::messageId);
+    @Override
+    public Mono<Void> publishLoanCalculateCapacity(String message) {
+        log.info("Enviando evento a loan-calculate-capacity-queue: {}", message);
+        return sendToQueue(message, QueueType.LOAN_CALCULATE_CAPACITY).then();
     }
 
-    private SendMessageRequest buildRequest(String message) {
+    @Override
+    public Mono<String> publishLoanNotificationEmail(String message) {
+        log.info("Enviando notificación a loan-notification-email-queue: {}", message);
+        return sendToQueue(message, QueueType.LOAN_NOTIFICATION_EMAIL);
+    }
+
+    private Mono<String> sendToQueue(String message, QueueType queueType) {
+        String queueUrl = getQueueUrl(queueType);
+        return sendToQueueUrl(message, queueUrl);
+    }
+
+    private String getQueueUrl(QueueType queueType) {
+        String queueUrl = properties.queues().get(queueType.getQueueKey());
+        if (queueUrl == null || queueUrl.isEmpty()) {
+            throw new IllegalArgumentException("Queue URL not found for: " + queueType);
+        }
+        return queueUrl;
+    }
+
+    private Mono<String> sendToQueueUrl(String message, String queueUrl) {
+        return Mono.fromCallable(() -> buildRequest(message, queueUrl))
+                .flatMap(request -> Mono.fromFuture(client.sendMessage(request)))
+                .doOnNext(response -> log.debug("Message sent to queue {} with messageId: {}", queueUrl, response.messageId()))
+                .map(SendMessageResponse::messageId)
+                .doOnError(e -> log.error("Error sending message to queue {}: {}", queueUrl, e.getMessage()));
+    }
+
+    private SendMessageRequest buildRequest(String message, String queueUrl) {
         return SendMessageRequest.builder()
-                .queueUrl(properties.queueUrl())
+                .queueUrl(queueUrl)
                 .messageBody(message)
                 .build();
     }
-
 }

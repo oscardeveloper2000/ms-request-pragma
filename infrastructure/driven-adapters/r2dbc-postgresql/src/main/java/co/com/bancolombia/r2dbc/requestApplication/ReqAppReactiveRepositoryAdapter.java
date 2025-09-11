@@ -1,14 +1,13 @@
 package co.com.bancolombia.r2dbc.requestApplication;
 
-import co.com.bancolombia.model.requestapplication.PageRequest;
-import co.com.bancolombia.model.requestapplication.RequestApplication;
-import co.com.bancolombia.model.requestapplication.gateways.RequestApplicationRepository;
+import co.com.bancolombia.model.common.paginators.PageableDomain;
+import co.com.bancolombia.model.domains.requestapplication.RequestApplication;
+import co.com.bancolombia.model.domains.requestapplication.gateways.RequestApplicationRepository;
 import co.com.bancolombia.r2dbc.entity.RequestApplicationEntity;
 import co.com.bancolombia.r2dbc.helper.ReactiveAdapterOperations;
 import co.com.bancolombia.r2dbc.mapper.RequestApplicationEntityMapper;
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,7 +41,7 @@ public class ReqAppReactiveRepositoryAdapter extends ReactiveAdapterOperations<
 
 
     @Override
-    public Flux<RequestApplication> findAllByStatusIdWithPageable(Long statusId, PageRequest pageable) {
+    public Flux<RequestApplication> findAllByStatusIdWithPageable(Long statusId, PageableDomain pageable) {
         Pageable pageable1 =  org.springframework.data.domain.PageRequest.of(pageable.getPage(), pageable.getSize());
         return repository.findByStatusId(statusId, pageable1)
                 .map(entityMapper::toModel);
@@ -57,5 +56,11 @@ public class ReqAppReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     @Override
     public Mono<Long> countByStatusId(Long statusId) {
         return repository.countByStatusId(statusId);
+    }
+
+    @Override
+    public Flux<RequestApplication> findByEmailAndStatusId(String email, Long statusId) {
+        return repository.findByEmailAndStatusId(email, statusId)
+                .map(entityMapper::toModel);
     }
 }

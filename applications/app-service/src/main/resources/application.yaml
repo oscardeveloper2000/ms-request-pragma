@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:8081}
+  port: "${SERVER_PORT:8081}"
 spring:
   application:
     name: "MsRequest"
@@ -18,15 +18,15 @@ spring:
           secret: "${JWT_KEY_SECRET:c3VwZXJzZWNyZXRrZXlzZWNyZXRrZXlzZWNyZXQxMjM0}"
 adapters:
   r2dbc:
-    host: ${DATABASE_HOST:localhost}
-    port: ${DATABASE_PORT:5432}
-    database: ${DATABASE_NAME:db-request}
-    schema: ${DATABASE_SCHEMA:public}
-    username: ${DATABASE_USER:gestor}
-    password: ${DATABASE_PASSWORD:123456}
+    host: "${DATABASE_HOST:localhost}"
+    port: "${DATABASE_PORT:5432}"
+    database: "${DATABASE_NAME:db-request}"
+    schema: "${DATABASE_SCHEMA:public}"
+    username: "${DATABASE_USER:gestor}"
+    password: "${DATABASE_PASSWORD:123456}"
   restconsumer:
     timeout: 5000
-    url: ${BASE_URL_MS_AUTH:"http://localhost:8080"}
+    url: "${BASE_URL_MS_AUTH:http://localhost:8080}"
 management:
   health:
     circuitbreakers:
@@ -67,6 +67,19 @@ cors:
   allowed-origins: "*"
 adapter:
   sqs:
-    region: ${SQS_REGION:"us-east-1"}
-    queueUrl: ${SQS_URL:"https://sqs.us-east-1.amazonaws.com/794490944018/loan-notification-email-queue"}
-
+    region: "${SQS_REGION:us-east-1}"
+    queues:
+      loan-notification-email-queue-url: "${QUEUE_URL_NOTIFICATION_EMAIL:https://sqs.us-east-1.amazonaws.com/794490944018/loan-notification-email-queue}"
+      loan-calculate-capacity-queue-url: "${QUEUE_URL_CALCULATE_CAPACITY:https://sqs.us-east-1.amazonaws.com/794490944018/loan-calculate-capacity-queue}"
+entrypoint:
+  sqs:
+    region: "${SQS_REGION:us-east-1}"
+    queues:
+      validation-results-queue: "${VALIDATION_RESULTS_QUEUE_URL:https://sqs.us-east-1.amazonaws.com/794490944018/validation-results-queue}"
+#    endpoint: "http://localhost:4566"
+#    endpoint: null
+    queueUrl: "${VALIDATION_RESULTS_QUEUE_URL:https://sqs.us-east-1.amazonaws.com/794490944018/validation-results-queue}"
+    waitTimeSeconds: 20
+    maxNumberOfMessages: 10
+    visibilityTimeoutSeconds: 10
+    numberOfThreads: 1

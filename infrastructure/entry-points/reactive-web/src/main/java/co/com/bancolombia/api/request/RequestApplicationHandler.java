@@ -4,21 +4,20 @@ import co.com.bancolombia.api.error.ErrorHandler;
 import co.com.bancolombia.api.request.dto.RequestApplicationMapper;
 import co.com.bancolombia.api.request.dto.RequestApplicationRecord;
 import co.com.bancolombia.api.request.dto.UpdateStatusRequest;
-import co.com.bancolombia.model.common.CustomPageResponseReport;
-import co.com.bancolombia.model.common.LoggerPort;
-import co.com.bancolombia.model.common.PageResponse;
-import co.com.bancolombia.model.requestapplication.RequestReportResponse;
+import co.com.bancolombia.model.common.paginators.CustomPageResponseReport;
+import co.com.bancolombia.model.common.gateways.LoggerPort;
+import co.com.bancolombia.model.domains.requestapplication.dto.RequestReportResponse;
+import co.com.bancolombia.security.adapter.TokenGatewayAdapter;
 import co.com.bancolombia.usecase.requestapplication.RequestApplicationEvents;
 import co.com.bancolombia.usecase.requestapplication.UpdateSatus;
 import lombok.RequiredArgsConstructor;
-import co.com.bancolombia.model.requestapplication.PageRequest;
+import co.com.bancolombia.model.common.paginators.PageableDomain;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 
@@ -32,6 +31,7 @@ public class RequestApplicationHandler {
     private final LoggerPort logger;
     private final ErrorHandler errorHandler;
     private final UpdateSatus updateSatusUseCase;
+    private final TokenGatewayAdapter tokenGateway;
 
     public Mono<ServerResponse> listenPOSTUseCase(ServerRequest serverRequest) {
         logger.info("listenPOSTUseCase: inicio procesamiento de solicitud");
@@ -42,7 +42,12 @@ public class RequestApplicationHandler {
                 .map(mapper::fromRequest)
                 .doOnNext(model -> logger.info("listenPOSTUseCase: mapeado a modelo documentNumber={}, loanTypeId={}",
                         model.getDocumentNumber(), model.getLoanTypeId()))
-                .flatMap(useCase::applySave)
+                .zipWith(tokenGateway.getEmailFromToken())
+                .flatMap(tupe -> {
+                    String emailFromToken = tupe.getT2();
+                    logger.info("listenPOSTUseCase: token obtenido exitosamente, email={}", emailFromToken);
+                    return useCase.applySave(tupe.getT1(), emailFromToken);
+                })
                 .doOnSuccess(saved -> logger.info("listenPOSTUseCase: guardado OK id={}, documentNumber={}",
                         saved.getId(), saved.getDocumentNumber()))
                 .map(mapper::toResponse)
@@ -67,9 +72,9 @@ public class RequestApplicationHandler {
             logger.warn("SolicitudHandler: statusId es requerido");
             return ServerResponse.badRequest().bodyValue("statusId es requerido");
         }
-        PageRequest pageRequest = new PageRequest(page, size);
+        PageableDomain pageRequest = new PageableDomain(page, size);
 
-        Mono<CustomPageResponseReport<RequestReportResponse>> result = useCase.applyFilterByStatus(pageRequest, statusId, token);
+        Mono<CustomPageResponseReport<RequestReportResponse>> result = useCase.applyFilterByStatus(pageRequest, statusId);
 
 
         return ServerResponse.ok()

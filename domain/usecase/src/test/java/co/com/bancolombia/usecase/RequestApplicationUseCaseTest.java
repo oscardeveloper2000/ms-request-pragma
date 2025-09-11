@@ -1,20 +1,19 @@
 package co.com.bancolombia.usecase;
 
 import co.com.bancolombia.model.auth.TokenGateway;
-import co.com.bancolombia.model.common.LoggerPort;
-import co.com.bancolombia.model.common.CustomPageResponseReport;
-import co.com.bancolombia.model.requestapplication.PageRequest;
-import co.com.bancolombia.model.requestapplication.RequestApplication;
-import co.com.bancolombia.model.requestapplication.RequestReportResponse;
-import co.com.bancolombia.model.requestapplication.gateways.RequestApplicationRepository;
-import co.com.bancolombia.model.status.Status;
-import co.com.bancolombia.model.status.StatusCode;
-import co.com.bancolombia.model.status.gateways.StatusRepository;
-import co.com.bancolombia.model.typeloan.TypeLoan;
-import co.com.bancolombia.model.typeloan.gateways.TypeLoanRepository;
-import co.com.bancolombia.model.user.User;
-import co.com.bancolombia.model.user.UserBasicInfo;
-import co.com.bancolombia.model.user.gateways.UserRepository;
+import co.com.bancolombia.model.common.gateways.LoggerPort;
+import co.com.bancolombia.model.external.messaging.gateway.MessagePublisherGateway;
+import co.com.bancolombia.model.common.paginators.PageableDomain;
+import co.com.bancolombia.model.domains.requestapplication.RequestApplication;
+import co.com.bancolombia.model.domains.requestapplication.gateways.RequestApplicationRepository;
+import co.com.bancolombia.model.domains.status.Status;
+import co.com.bancolombia.model.domains.status.StatusCode;
+import co.com.bancolombia.model.domains.status.gateways.StatusRepository;
+import co.com.bancolombia.model.domains.typeloan.TypeLoan;
+import co.com.bancolombia.model.domains.typeloan.gateways.TypeLoanRepository;
+import co.com.bancolombia.model.external.rest.user.dto.User;
+import co.com.bancolombia.model.external.rest.user.dto.UserBasicInfo;
+import co.com.bancolombia.model.external.rest.user.gateways.UserRepository;
 import co.com.bancolombia.usecase.commom.DomainValidationException;
 import co.com.bancolombia.usecase.requestapplication.RequestApplicationUseCase;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +38,7 @@ class RequestApplicationUseCaseTest {
     private LoggerPort logger;
     private TokenGateway tokenGateway;
     private RequestApplicationUseCase useCase;
+    private MessagePublisherGateway messagePublisherGateway;
 
     @BeforeEach
     void setUp() {
@@ -49,7 +49,7 @@ class RequestApplicationUseCaseTest {
         logger = mock(LoggerPort.class);
         tokenGateway = mock(TokenGateway.class);
 
-        useCase = new RequestApplicationUseCase(repository, statusRepository, typeLoanRepository, userRepository, logger, tokenGateway);
+        useCase = new RequestApplicationUseCase(repository, statusRepository, typeLoanRepository, userRepository, logger, tokenGateway, messagePublisherGateway);
     }
 
     private RequestApplication buildRequest() {
@@ -266,7 +266,7 @@ class RequestApplicationUseCaseTest {
     // ✅ applyFilterByStatus: caso feliz
     @Test
     void shouldReturnFilteredRequestsByStatusSuccessfully() {
-        var pageable = new PageRequest(0, 10);
+        var pageable = new PageableDomain(0, 10);
         var statusId = StatusCode.PENDING.id();
         var token = "mockToken";
         var requestApp = RequestApplication.builder()

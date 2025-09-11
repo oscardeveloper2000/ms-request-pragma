@@ -1,6 +1,6 @@
 package co.com.bancolombia.api.request.dto;
 
-import co.com.bancolombia.model.requestapplication.RequestApplication;
+import co.com.bancolombia.model.domains.requestapplication.RequestApplication;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

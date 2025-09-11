@@ -12,4 +12,5 @@ public interface ReqAppReactiveRepository extends ReactiveCrudRepository<Request
     Flux<RequestApplicationEntity> findByStatusId(Long statusId, Pageable pageable);
     Flux<RequestApplicationEntity> findByStatusId(Long statusId);
     Mono<Long> countByStatusId(Long statusId);
+    Flux<RequestApplicationEntity> findByEmailAndStatusId(String email, Long statusId);
 }

@@ -13,9 +13,9 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
-public class TokenGatewayAdapter implements TokenGateway {
+public class TokenGatewayAdapter  {
 
-  @Override
+
   public Mono<String> getToken() {
     return ReactiveSecurityContextHolder.getContext()
         .map(SecurityContext::getAuthentication)
@@ -24,7 +24,7 @@ public class TokenGatewayAdapter implements TokenGateway {
         .map(Jwt::getTokenValue);
   }
 
-  @Override
+
   public Mono<String> getEmailFromToken() {
     return ReactiveSecurityContextHolder.getContext()
         .map(SecurityContext::getAuthentication)

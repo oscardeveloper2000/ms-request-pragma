@@ -1,10 +1,8 @@
 package co.com.bancolombia.r2dbc.typeLoan;
 
-import co.com.bancolombia.model.status.Status;
-import co.com.bancolombia.model.status.gateways.StatusRepository;
-import co.com.bancolombia.model.typeloan.TypeLoan;
-import co.com.bancolombia.model.typeloan.gateways.TypeLoanRepository;
-import co.com.bancolombia.r2dbc.entity.StatusEntity;
+
+import co.com.bancolombia.model.domains.typeloan.TypeLoan;
+import co.com.bancolombia.model.domains.typeloan.gateways.TypeLoanRepository;
 import co.com.bancolombia.r2dbc.entity.TypeLoanEntity;
 import co.com.bancolombia.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;

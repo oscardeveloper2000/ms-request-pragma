@@ -1,10 +1,7 @@
 package co.com.bancolombia.r2dbc.status;
 
-import co.com.bancolombia.model.requestapplication.RequestApplication;
-import co.com.bancolombia.model.requestapplication.gateways.RequestApplicationRepository;
-import co.com.bancolombia.model.status.Status;
-import co.com.bancolombia.model.status.gateways.StatusRepository;
-import co.com.bancolombia.r2dbc.entity.RequestApplicationEntity;
+import co.com.bancolombia.model.domains.status.Status;
+import co.com.bancolombia.model.domains.status.gateways.StatusRepository;
 import co.com.bancolombia.r2dbc.entity.StatusEntity;
 import co.com.bancolombia.r2dbc.helper.ReactiveAdapterOperations;
 import org.reactivecommons.utils.ObjectMapper;
