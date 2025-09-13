@@ -4,6 +4,7 @@ package co.com.bancolombia.sqs.sender;
 import co.com.bancolombia.model.external.messaging.gateway.MessagePublisherGateway;
 import co.com.bancolombia.sqs.sender.config.SQSSenderProperties;
 import co.com.bancolombia.sqs.sender.enums.QueueType;
+import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 public class SQSSender implements MessagePublisherGateway /*implements SomeGateway*/ {
     private final SQSSenderProperties properties;
     private final SqsAsyncClient client;
-
+    private static final Gson gson = new Gson();
     @Override
     public Mono<Void> publishLoanCalculateCapacity(String message) {
         log.info("Enviando evento a loan-calculate-capacity-queue: {}", message);
@@ -26,9 +27,11 @@ public class SQSSender implements MessagePublisherGateway /*implements SomeGatew
     }
 
     @Override
-    public Mono<String> publishLoanNotificationEmail(String message) {
-        log.info("Enviando notificación a loan-notification-email-queue: {}", message);
-        return sendToQueue(message, QueueType.LOAN_NOTIFICATION_EMAIL);
+    public <T> Mono<String> publishLoanNotificationEmail(T messageObject) {
+        log.info("Enviando notificación a loan-notification-email-queue: {}", messageObject.toString());
+        String jsonMessage = gson.toJson(messageObject);
+        log.debug("JSON message: {}", jsonMessage);
+        return sendToQueue(jsonMessage, QueueType.LOAN_NOTIFICATION_EMAIL);
     }
 
     private Mono<String> sendToQueue(String message, QueueType queueType) {

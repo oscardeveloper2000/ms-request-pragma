@@ -71,6 +71,9 @@ adapter:
     queues:
       loan-notification-email-queue-url: "${QUEUE_URL_NOTIFICATION_EMAIL:https://sqs.us-east-1.amazonaws.com/794490944018/loan-notification-email-queue}"
       loan-calculate-capacity-queue-url: "${QUEUE_URL_CALCULATE_CAPACITY:https://sqs.us-east-1.amazonaws.com/794490944018/loan-calculate-capacity-queue}"
+  restconsumer:
+    email: "${ADMIN_EMAIL:daniloos2000@gmail.com}"
+    password: "${ADMIN_PASSWORD:admin}"
 entrypoint:
   sqs:
     region: "${SQS_REGION:us-east-1}"

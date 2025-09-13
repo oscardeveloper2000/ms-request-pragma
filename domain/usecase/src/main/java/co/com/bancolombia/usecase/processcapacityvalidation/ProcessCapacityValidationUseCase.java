@@ -53,6 +53,7 @@ public class ProcessCapacityValidationUseCase {
 
     private Mono<UpdateStatusResponse> extractAndUpdateStatus(CapacityValidationEventListener event) {
         try {
+            logger.info("processValidationEvent: extractAndUpdateStatus {}", event);
             Long requestId = Long.parseLong(event.getSolicitudId());
             String mappedStatus = mapCapacityStatusToRequestStatus(event.getStatus());
 

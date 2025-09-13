@@ -1,7 +1,7 @@
 package co.com.bancolombia.security.adapter;
 
 
-import co.com.bancolombia.model.auth.TokenGateway;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -18,8 +18,11 @@ public class TokenGatewayAdapter  {
 
   public Mono<String> getToken() {
     return ReactiveSecurityContextHolder.getContext()
+            .doOnError(e -> log.info("TokenGatewayAdapter.getToken: context={}", e))
         .map(SecurityContext::getAuthentication)
+            .doOnError(e -> log.error("TokenGatewayAdapter.getToken: error1", e))
         .map(Authentication::getPrincipal)
+            .doOnError(e -> log.error("TokenGatewayAdapter.getToken: error2", e))
         .cast(Jwt.class)
         .map(Jwt::getTokenValue);
   }
