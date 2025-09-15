@@ -34,6 +34,14 @@ public class SQSSender implements MessagePublisherGateway /*implements SomeGatew
         return sendToQueue(jsonMessage, QueueType.LOAN_NOTIFICATION_EMAIL);
     }
 
+    @Override
+    public <T> Mono<String> publishReportLoan(T messageObject) {
+        log.info("Enviando reporte a report-loan-queue: {}", messageObject.toString());
+        String jsonMString = gson.toJson(messageObject);
+        log.debug("JSON message: {}", jsonMString);
+        return sendToQueue(jsonMString, QueueType.LOAN_REPORT);
+    }
+
     private Mono<String> sendToQueue(String message, QueueType queueType) {
         String queueUrl = getQueueUrl(queueType);
         return sendToQueueUrl(message, queueUrl);
