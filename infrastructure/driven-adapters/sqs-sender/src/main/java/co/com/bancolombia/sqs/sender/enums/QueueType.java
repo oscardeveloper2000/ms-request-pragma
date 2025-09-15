@@ -3,7 +3,8 @@ package co.com.bancolombia.sqs.sender.enums;
 
 public enum QueueType {
     LOAN_CALCULATE_CAPACITY("loan-calculate-capacity-queue-url"),
-    LOAN_NOTIFICATION_EMAIL("loan-notification-email-queue-url");
+    LOAN_NOTIFICATION_EMAIL("loan-notification-email-queue-url"),
+    LOAN_REPORT("loan-report-queue-url");
 
     private final String queueKey;
 
