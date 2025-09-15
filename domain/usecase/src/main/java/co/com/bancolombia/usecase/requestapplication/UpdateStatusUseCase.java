@@ -92,8 +92,13 @@ public class UpdateStatusUseCase implements UpdateSatus {
                 .flatMap(loanType -> {
                     List<PaymentPlan> paymentPlan = calculatePaymentPlan(savedRequestApplication.getAmount(), BigDecimal.valueOf(loanType.getInterestRate()), savedRequestApplication.getTerm());
                     String message = buildNotificationMessageApproved(savedRequestApplication, status, user, paymentPlan);
-                    return messagePublisherGateway.publishLoanNotificationEmail(message)
+                    Mono<String> notificationMono =  messagePublisherGateway.publishLoanNotificationEmail(message)
                             .doOnSuccess(messageId -> logger.info("updateStatus: notification sent messageId={}", messageId))
+                            .doOnError(error -> logger.error("updateStatus: notification sending failed", error));
+                    Mono<String> reportMono = messagePublisherGateway.publishReportLoan(message)
+                            .doOnSuccess(messageId -> logger.info("updateStatus: report sent messageId={}", messageId))
+                            .doOnError(error -> logger.error("updateStatus: report sending failed", error));
+                    return Mono.zip(notificationMono, reportMono)
                             .thenReturn(savedRequestApplication);
                 });
     }
@@ -167,14 +172,15 @@ public class UpdateStatusUseCase implements UpdateSatus {
         }
         paymentPlanJson.append("]");
 
-        String messageContent = String.format(
-                "{\"requestId\":%d,\"status\":\"%s\",\"userClient\":\"%s\",\"emailClient\":\"%s\",\"paymentPlan\":%s}",
-                request.getId(),
-                status,
-                user.getFirstName() + " " + user.getLastName(),
-                request.getEmail(),
-                paymentPlanJson.toString()
-        );
+String messageContent = String.format(
+                        "{\"requestId\":%d,\"status\":\"%s\",\"userClient\":\"%s\",\"emailClient\":\"%s\",\"amount\":%s,\"paymentPlan\":%s}",
+                        request.getId(),
+                        status,
+                        user.getFirstName() + " " + user.getLastName(),
+                        request.getEmail(),
+                        request.getAmount(),
+                        paymentPlanJson.toString()
+                );
 
         return messageContent;
     }
